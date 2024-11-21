@@ -468,7 +468,7 @@ public class PhotoGalleryPlugin: NSObject, FlutterPlugin {
     let mimeType = self.extractMimeTypeFromAsset(asset: asset)
     let resource = self.extractResourceFromAsset(asset: asset)
     let size = self.extractSizeFromResource(resource: resource)
-    let orientation = self.toOrientationValue(orientation: asset.value(forKey: "orientation") as? UIImage.Orientation)
+    let orientation = self.extractOrientationFromAsset(asset: asset)
     return [
       "id": asset.localIdentifier,
       "filename": filename,
@@ -523,30 +523,16 @@ public class PhotoGalleryPlugin: NSObject, FlutterPlugin {
     }
   }
 
-  private func toOrientationValue(orientation: UIImage.Orientation?) -> Int {
-    guard let orientation = orientation else {
-      return 0
+   private func extractOrientationFromAsset(asset: PHAsset) -> Int {
+    var imageOrientation = 0
+    let options = PHImageRequestOptions()
+    options.isSynchronous = true
+    
+    PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { _, _, orientation, _ in
+      imageOrientation = Int(orientation.rawValue)
     }
-    switch orientation {
-    case UIImage.Orientation.up:
-      return 1
-    case UIImage.Orientation.down:
-      return 3
-    case UIImage.Orientation.left:
-      return 6
-    case UIImage.Orientation.right:
-      return 8
-    case UIImage.Orientation.upMirrored:
-      return 2
-    case UIImage.Orientation.downMirrored:
-      return 4
-    case UIImage.Orientation.leftMirrored:
-      return 5
-    case UIImage.Orientation.rightMirrored:
-      return 7
-    @unknown default:
-      return 0
-    }
+    
+    return imageOrientation
   }
 
   private func predicateFromMediumType(mediumType: String?) -> NSPredicate? {
